@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TBV Play - Fruit Catching Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="container">
+        <div id="login">
+            <h2>Đăng nhập</h2>
+            <form id="login-form">
+                <label for="username">Tên đăng nhập:</label>
+                <input type="text" id="username" name="username" required>
+                <label for="password">Mật khẩu:</label>
+                <input type="password" id="password" name="password" required>
+                <button type="submit">Đăng nhập</button>
+            </form>
+        </div>
+        <div id="game-area">
+            <canvas id="gameCanvas"></canvas>
+            <audio id="background-music" loop>
+                <source src="background.mp3" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            <audio id="game-over-sound">
+                <source src="game-over.mp3" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        <div id="leaderboard">
+            <h2>Bảng xếp hạng</h2>
+            <ul id="scores">
+                <!-- Bảng xếp hạng sẽ được cập nhật bằng JavaScript -->
+            </ul>
+            <button id="share-button">Chia sẻ trò chơi</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
