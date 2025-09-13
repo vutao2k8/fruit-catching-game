@@ -20,8 +20,8 @@
       display: grid;
       grid-template-columns: 1fr 2fr 1fr;
       grid-gap: 10px;
-      width: 90%;
-      height: 90%;
+      width: 95%;
+      height: 95%;
       background-color: #f0f8ff;
       border: 2px solid #00008b;
       border-radius: 10px;
@@ -87,7 +87,7 @@
       border: 1px solid #00008b;
     }
 
-    #share-button, #restart-button {
+    #share-button {
       margin-top: 10px;
       padding: 10px;
       border: none;
@@ -95,23 +95,45 @@
       cursor: pointer;
       color: white;
       font-weight: bold;
+      background-color: #00008b;
     }
-    #share-button { background-color: #00008b; }
     #share-button:hover { background-color: #000066; }
-    #restart-button { background-color: #ff4500; display:none; }
-    #restart-button:hover { background-color: #cc3700; }
 
     #credits {
       font-size: 14px;
     }
-    #credits h3 {
-      margin-top: 0;
-    }
+    #credits h3 { margin-top: 0; }
     #logo {
       display: block;
       max-width: 100px;
       margin: auto;
     }
+
+    /* Toast popup */
+    #toast {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border: 2px solid #00008b;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    #toast h3 { margin: 0 0 10px 0; }
+    #toast button {
+      padding: 10px;
+      background-color: #ff4500;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #toast button:hover { background-color: #cc3700; }
   </style>
 </head>
 <body>
@@ -131,8 +153,7 @@
 
   <!-- Game -->
   <div id="game-area">
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
-    <button id="restart-button">Chơi lại</button>
+    <canvas id="gameCanvas" width="600" height="600"></canvas>
   </div>
 
   <!-- Leaderboard -->
@@ -152,17 +173,22 @@
   </div>
 </div>
 
+<!-- Toast popup -->
+<div id="toast">
+  <h3 id="toast-message"></h3>
+  <button id="toast-restart">Chơi lại</button>
+</div>
+
 <script>
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
   let fruits = [];
-  let basket = { x: canvas.width / 2 - 20, y: canvas.height - 40, width: 60, height: 20 };
+  let basket = { x: canvas.width / 2 - 30, y: canvas.height - 40, width: 80, height: 20 };
   let score = 0;
   let gameRunning = false;
   let currentPlayer = "";
 
-  // Âm thanh đơn giản bằng Web Audio
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   function playSound(freq, duration) {
     const oscillator = audioCtx.createOscillator();
@@ -183,7 +209,7 @@
 
   function drawFruit(x, y, color) {
     ctx.beginPath();
-    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
     ctx.closePath();
@@ -196,7 +222,7 @@
 
     for (let i = 0; i < fruits.length; i++) {
       drawFruit(fruits[i].x, fruits[i].y, fruits[i].color);
-      fruits[i].y += 2;
+      fruits[i].y += 3;
 
       if (fruits[i].y > canvas.height) {
         gameOver();
@@ -204,7 +230,7 @@
       }
 
       if (
-        fruits[i].y + 10 >= basket.y &&
+        fruits[i].y + 12 >= basket.y &&
         fruits[i].x >= basket.x &&
         fruits[i].x <= basket.x + basket.width
       ) {
@@ -220,9 +246,8 @@
   function gameOver() {
     gameRunning = false;
     playSound(200,0.5);
-    alert("Game Over! Điểm: " + score);
     saveScore(currentPlayer, score);
-    document.getElementById('restart-button').style.display = 'block';
+    showToast("Game Over! Điểm: " + score);
   }
 
   setInterval(() => {
@@ -272,11 +297,11 @@
     basket.x = event.clientX - rect.left - basket.width / 2;
   });
 
-  document.getElementById('restart-button').addEventListener('click', () => {
+  document.getElementById('toast-restart').addEventListener('click', () => {
+    hideToast();
     fruits = [];
     score = 0;
     gameRunning = true;
-    document.getElementById('restart-button').style.display = 'none';
     updateGameArea();
   });
 
@@ -286,6 +311,15 @@
       alert('Link chia sẻ đã được sao chép vào clipboard!');
     });
   });
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-message').innerText = message;
+    toast.style.display = 'block';
+  }
+  function hideToast() {
+    document.getElementById('toast').style.display = 'none';
+  }
 
   updateLeaderboard();
 </script>
