@@ -1,42 +1,293 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TBV Play - Fruit Catching Game</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Fruit Catch - Táo Bắc Việt Team</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #87CEEB, #ffffff);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #container {
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr;
+      grid-gap: 10px;
+      width: 90%;
+      height: 90%;
+      background-color: #f0f8ff;
+      border: 2px solid #00008b;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      padding: 10px;
+    }
+
+    #login, #leaderboard, #credits {
+      background-color: #add8e6;
+      padding: 20px;
+      border-radius: 10px;
+      overflow-y: auto;
+    }
+
+    #game-area {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background-color: #ffffff;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    canvas {
+      border: 2px solid #00008b;
+      border-radius: 10px;
+      background: #e0f7fa;
+    }
+
+    #login form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #login input {
+      padding: 8px;
+      border: 1px solid #00008b;
+      border-radius: 5px;
+    }
+
+    #login button {
+      padding: 10px;
+      background-color: #00008b;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #login button:hover { background-color: #000066; }
+
+    #leaderboard ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #leaderboard li {
+      background: #ffffffcc;
+      margin: 5px 0;
+      padding: 8px;
+      border-radius: 5px;
+      font-weight: bold;
+      border: 1px solid #00008b;
+    }
+
+    #share-button, #restart-button {
+      margin-top: 10px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+    }
+    #share-button { background-color: #00008b; }
+    #share-button:hover { background-color: #000066; }
+    #restart-button { background-color: #ff4500; display:none; }
+    #restart-button:hover { background-color: #cc3700; }
+
+    #credits {
+      font-size: 14px;
+    }
+    #credits h3 {
+      margin-top: 0;
+    }
+    #logo {
+      display: block;
+      max-width: 100px;
+      margin: auto;
+    }
+  </style>
 </head>
 <body>
-    <div id="container">
-        <div id="login">
-            <h2>Đăng nhập</h2>
-            <form id="login-form">
-                <label for="username">Tên đăng nhập:</label>
-                <input type="text" id="username" name="username" required>
-                <label for="password">Mật khẩu:</label>
-                <input type="password" id="password" name="password" required>
-                <button type="submit">Đăng nhập</button>
-            </form>
-        </div>
-        <div id="game-area">
-            <canvas id="gameCanvas"></canvas>
-            <audio id="background-music" loop>
-                <source src="background.mp3" type="audio/mpeg">
-                Your browser does not support the audio element.
-            </audio>
-            <audio id="game-over-sound">
-                <source src="game-over.mp3" type="audio/mpeg">
-                Your browser does not support the audio element.
-            </audio>
-        </div>
-        <div id="leaderboard">
-            <h2>Bảng xếp hạng</h2>
-            <ul id="scores">
-                <!-- Bảng xếp hạng sẽ được cập nhật bằng JavaScript -->
-            </ul>
-            <button id="share-button">Chia sẻ trò chơi</button>
-        </div>
-    </div>
-    <script src="game.js"></script>
+<div id="container">
+  <!-- Login -->
+  <div id="login">
+    <img id="logo" src="logo.png" alt="Fruit Catch Logo">
+    <h2>Đăng nhập</h2>
+    <form id="login-form">
+      <label for="username">Tên đăng nhập:</label>
+      <input type="text" id="username" name="username" required>
+      <label for="password">Mật khẩu:</label>
+      <input type="password" id="password" name="password" required>
+      <button type="submit">Bắt đầu chơi</button>
+    </form>
+  </div>
+
+  <!-- Game -->
+  <div id="game-area">
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <button id="restart-button">Chơi lại</button>
+  </div>
+
+  <!-- Leaderboard -->
+  <div id="leaderboard">
+    <h2>Bảng xếp hạng</h2>
+    <ul id="scores"></ul>
+    <button id="share-button">Chia sẻ trò chơi</button>
+  </div>
+
+  <!-- Credits -->
+  <div id="credits">
+    <h3>Fruit Catch</h3>
+    <p>Bản quyền © Táo Bắc Việt Team</p>
+    <p><b>Code:</b> Táo Đỏ</p>
+    <p><b>Ý tưởng:</b> Táo Xanh Lá</p>
+    <p><b>Thiết kế hình ảnh:</b> NVT Studio</p>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let fruits = [];
+  let basket = { x: canvas.width / 2 - 20, y: canvas.height - 40, width: 60, height: 20 };
+  let score = 0;
+  let gameRunning = false;
+  let currentPlayer = "";
+
+  // Âm thanh đơn giản bằng Web Audio
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playSound(freq, duration) {
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = "sine";
+    oscillator.frequency.value = freq;
+    oscillator.start();
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + duration);
+  }
+
+  function drawBasket() {
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+  }
+
+  function drawFruit(x, y, color) {
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.closePath();
+  }
+
+  function updateGameArea() {
+    if (!gameRunning) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBasket();
+
+    for (let i = 0; i < fruits.length; i++) {
+      drawFruit(fruits[i].x, fruits[i].y, fruits[i].color);
+      fruits[i].y += 2;
+
+      if (fruits[i].y > canvas.height) {
+        gameOver();
+        return;
+      }
+
+      if (
+        fruits[i].y + 10 >= basket.y &&
+        fruits[i].x >= basket.x &&
+        fruits[i].x <= basket.x + basket.width
+      ) {
+        playSound(600,0.2);
+        fruits.splice(i, 1);
+        score++;
+        updateLeaderboard();
+      }
+    }
+    requestAnimationFrame(updateGameArea);
+  }
+
+  function gameOver() {
+    gameRunning = false;
+    playSound(200,0.5);
+    alert("Game Over! Điểm: " + score);
+    saveScore(currentPlayer, score);
+    document.getElementById('restart-button').style.display = 'block';
+  }
+
+  setInterval(() => {
+    if (gameRunning) {
+      let x = Math.random() * (canvas.width - 20) + 10;
+      let colors = ['red', 'green', 'yellow', 'orange', 'purple'];
+      let color = colors[Math.floor(Math.random() * colors.length)];
+      fruits.push({ x: x, y: 0, color: color });
+    }
+  }, 1000);
+
+  function updateLeaderboard() {
+    const scoresList = document.getElementById('scores');
+    scoresList.innerHTML = '';
+    let scores = JSON.parse(localStorage.getItem('scores')) || [];
+    scores.sort((a, b) => b.score - a.score).slice(0, 10).forEach((s, index) => {
+      const li = document.createElement('li');
+      li.textContent = `${index+1}. ${s.name}: ${s.score}`;
+      scoresList.appendChild(li);
+    });
+  }
+
+  function saveScore(name, score) {
+    let scores = JSON.parse(localStorage.getItem('scores')) || [];
+    scores.push({ name, score });
+    localStorage.setItem('scores', JSON.stringify(scores));
+    updateLeaderboard();
+  }
+
+  document.getElementById('login-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    currentPlayer = document.getElementById('username').value;
+    if (currentPlayer) {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('game-area').style.display = 'flex';
+      document.getElementById('leaderboard').style.display = 'block';
+      gameRunning = true;
+      score = 0;
+      fruits = [];
+      updateLeaderboard();
+      updateGameArea();
+    }
+  });
+
+  canvas.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    basket.x = event.clientX - rect.left - basket.width / 2;
+  });
+
+  document.getElementById('restart-button').addEventListener('click', () => {
+    fruits = [];
+    score = 0;
+    gameRunning = true;
+    document.getElementById('restart-button').style.display = 'none';
+    updateGameArea();
+  });
+
+  document.getElementById('share-button').addEventListener('click', () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Link chia sẻ đã được sao chép vào clipboard!');
+    });
+  });
+
+  updateLeaderboard();
+</script>
 </body>
 </html>
