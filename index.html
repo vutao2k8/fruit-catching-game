@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fruit Catch - Táo Bắc Việt Team</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <style>
@@ -138,192 +139,179 @@
   </style>
 </head>
 <body>
-<div id="container">
-  <!-- Login -->
-  <div id="login">
-    <img id="logo" src="logo.png" alt="Fruit Catch Logo">
-    <h2>Đăng nhập</h2>
-    <form id="login-form">
-      <label for="username">Tên đăng nhập:</label>
-      <input type="text" id="username" name="username" required>
-      <label for="password">Mật khẩu:</label>
-      <input type="password" id="password" name="password" required>
-      <button type="submit">Bắt đầu chơi</button>
-    </form>
+  <div id="container">
+    <!-- Đăng nhập -->
+    <div id="login">
+      <h2>Đăng nhập</h2>
+      <form id="login-form">
+        <label for="username">Tên đăng nhập:</label>
+        <input type="text" id="username" required>
+        <label for="password">Mật khẩu:</label>
+        <input type="password" id="password" required>
+        <button type="submit">Vào game</button>
+      </form>
+    </div>
+
+    <!-- Khu vực game -->
+    <div id="game-area">
+      <canvas id="gameCanvas" width="400" height="400"></canvas>
+    </div>
+
+    <!-- Bảng xếp hạng -->
+    <div id="leaderboard">
+      <h2>Bảng xếp hạng</h2>
+      <ul id="scores"></ul>
+      <button id="share-button">Chia sẻ trò chơi</button>
+    </div>
+
+    <!-- Credits -->
+    <div id="credits">
+      <img id="logo" src="logo.png" alt="Fruit Catch Logo">
+      <h3>Fruit Catch</h3>
+      <p><b>Bản quyền:</b> Táo Bắc Việt Team</p>
+      <p><b>Code:</b> Táo Đỏ</p>
+      <p><b>Ý tưởng:</b> Táo Xanh Lá</p>
+      <p><b>Thiết kế ảnh:</b> NVT Studio</p>
+    </div>
   </div>
 
-  <!-- Game -->
-  <div id="game-area">
-    <canvas id="gameCanvas" width="600" height="600"></canvas>
+  <!-- Toast popup -->
+  <div id="toast">
+    <h3>Game Over!</h3>
+    <p id="toast-score"></p>
+    <button onclick="restartGame()">Chơi lại</button>
   </div>
 
-  <!-- Leaderboard -->
-  <div id="leaderboard">
-    <h2>Bảng xếp hạng</h2>
-    <ul id="scores"></ul>
-    <button id="share-button">Chia sẻ trò chơi</button>
-  </div>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-  <!-- Credits -->
-  <div id="credits">
-    <h3>Fruit Catch</h3>
-    <p>Bản quyền © Táo Bắc Việt Team</p>
-    <p><b>Code:</b> Táo Đỏ</p>
-    <p><b>Ý tưởng:</b> Táo Xanh Lá</p>
-    <p><b>Thiết kế hình ảnh:</b> NVT Studio</p>
-  </div>
-</div>
+    let fruits = [];
+    let basket = { x: canvas.width / 2 - 20, y: canvas.height - 40, width: 60, height: 20 };
+    let score = 0;
+    let gameRunning = false;
+    let currentUser = "";
 
-<!-- Toast popup -->
-<div id="toast">
-  <h3 id="toast-message"></h3>
-  <button id="toast-restart">Chơi lại</button>
-</div>
-
-<script>
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-
-  let fruits = [];
-  let basket = { x: canvas.width / 2 - 30, y: canvas.height - 40, width: 80, height: 20 };
-  let score = 0;
-  let gameRunning = false;
-  let currentPlayer = "";
-
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  function playSound(freq, duration) {
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.type = "sine";
-    oscillator.frequency.value = freq;
-    oscillator.start();
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + duration);
-  }
-
-  function drawBasket() {
-    ctx.fillStyle = 'blue';
-    ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
-  }
-
-  function drawFruit(x, y, color) {
-    ctx.beginPath();
-    ctx.arc(x, y, 12, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.closePath();
-  }
-
-  function updateGameArea() {
-    if (!gameRunning) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawBasket();
-
-    for (let i = 0; i < fruits.length; i++) {
-      drawFruit(fruits[i].x, fruits[i].y, fruits[i].color);
-      fruits[i].y += 3;
-
-      if (fruits[i].y > canvas.height) {
-        gameOver();
-        return;
-      }
-
-      if (
-        fruits[i].y + 12 >= basket.y &&
-        fruits[i].x >= basket.x &&
-        fruits[i].x <= basket.x + basket.width
-      ) {
-        playSound(600,0.2);
-        fruits.splice(i, 1);
-        score++;
-        updateLeaderboard();
-      }
+    function drawBasket() {
+      ctx.fillStyle = 'blue';
+      ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
     }
-    requestAnimationFrame(updateGameArea);
-  }
 
-  function gameOver() {
-    gameRunning = false;
-    playSound(200,0.5);
-    saveScore(currentPlayer, score);
-    showToast("Game Over! Điểm: " + score);
-  }
+    function drawFruit(x, y, color) {
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.closePath();
+    }
 
-  setInterval(() => {
-    if (gameRunning) {
+    function updateGameArea() {
+      if (!gameRunning) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawBasket();
+
+      for (let i = 0; i < fruits.length; i++) {
+        drawFruit(fruits[i].x, fruits[i].y, fruits[i].color);
+        fruits[i].y += 2;
+
+        if (fruits[i].y > canvas.height) {
+          gameRunning = false;
+          playBeep();
+          saveScore(currentUser, score);
+          showToast("Game Over! Điểm của bạn: " + score);
+          return;
+        }
+
+        if (
+          fruits[i].y + 10 >= basket.y &&
+          fruits[i].x >= basket.x &&
+          fruits[i].x <= basket.x + basket.width
+        ) {
+          fruits.splice(i, 1);
+          score++;
+          updateLeaderboard();
+        }
+      }
+      requestAnimationFrame(updateGameArea);
+    }
+
+    function spawnFruit() {
+      if (!gameRunning) return;
       let x = Math.random() * (canvas.width - 20) + 10;
       let colors = ['red', 'green', 'yellow', 'orange', 'purple'];
       let color = colors[Math.floor(Math.random() * colors.length)];
       fruits.push({ x: x, y: 0, color: color });
     }
-  }, 1000);
 
-  function updateLeaderboard() {
-    const scoresList = document.getElementById('scores');
-    scoresList.innerHTML = '';
-    let scores = JSON.parse(localStorage.getItem('scores')) || [];
-    scores.sort((a, b) => b.score - a.score).slice(0, 10).forEach((s, index) => {
-      const li = document.createElement('li');
-      li.textContent = `${index+1}. ${s.name}: ${s.score}`;
-      scoresList.appendChild(li);
-    });
-  }
+    function updateLeaderboard() {
+      const scores = JSON.parse(localStorage.getItem('scores')) || [];
+      const scoresList = document.getElementById('scores');
+      scoresList.innerHTML = '';
+      scores.sort((a, b) => b.score - a.score).slice(0, 10).forEach((entry, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${index + 1}. ${entry.user} - ${entry.score}`;
+        scoresList.appendChild(li);
+      });
+    }
 
-  function saveScore(name, score) {
-    let scores = JSON.parse(localStorage.getItem('scores')) || [];
-    scores.push({ name, score });
-    localStorage.setItem('scores', JSON.stringify(scores));
-    updateLeaderboard();
-  }
+    function saveScore(user, score) {
+      let scores = JSON.parse(localStorage.getItem('scores')) || [];
+      scores.push({ user, score });
+      localStorage.setItem('scores', JSON.stringify(scores));
+      updateLeaderboard();
+    }
 
-  document.getElementById('login-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    currentPlayer = document.getElementById('username').value;
-    if (currentPlayer) {
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('game-area').style.display = 'flex';
-      document.getElementById('leaderboard').style.display = 'block';
-      gameRunning = true;
+    function showToast(message) {
+      document.getElementById('toast-score').textContent = message;
+      document.getElementById('toast').style.display = 'block';
+    }
+
+    function restartGame() {
+      document.getElementById('toast').style.display = 'none';
       score = 0;
       fruits = [];
-      updateLeaderboard();
+      gameRunning = true;
       updateGameArea();
+      setInterval(spawnFruit, 1000);
     }
-  });
 
-  canvas.addEventListener('mousemove', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    basket.x = event.clientX - rect.left - basket.width / 2;
-  });
+    function playBeep() {
+      const ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctxAudio.createOscillator();
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(440, ctxAudio.currentTime);
+      oscillator.connect(ctxAudio.destination);
+      oscillator.start();
+      oscillator.stop(ctxAudio.currentTime + 0.2);
+    }
 
-  document.getElementById('toast-restart').addEventListener('click', () => {
-    hideToast();
-    fruits = [];
-    score = 0;
-    gameRunning = true;
-    updateGameArea();
-  });
-
-  document.getElementById('share-button').addEventListener('click', () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      alert('Link chia sẻ đã được sao chép vào clipboard!');
+    // Login
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      currentUser = document.getElementById('username').value;
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('game-area').style.display = 'flex';
+      gameRunning = true;
+      updateGameArea();
+      setInterval(spawnFruit, 1000);
     });
-  });
 
-  function showToast(message) {
-    const toast = document.getElementById('toast');
-    document.getElementById('toast-message').innerText = message;
-    toast.style.display = 'block';
-  }
-  function hideToast() {
-    document.getElementById('toast').style.display = 'none';
-  }
+    // Điều khiển giỏ bằng chuột
+    canvas.addEventListener('mousemove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      basket.x = event.clientX - rect.left - basket.width / 2;
+    });
 
-  updateLeaderboard();
-</script>
+    // Chia sẻ game
+    document.getElementById('share-button').addEventListener('click', () => {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Link chia sẻ đã được sao chép!');
+      });
+    });
+
+    updateLeaderboard();
+  </script>
 </body>
 </html>
-
